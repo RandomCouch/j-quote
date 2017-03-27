@@ -1,0 +1,267 @@
+extends layout
+
+block content
+    div(class='panel panel-primary')
+        div(class='panel-heading') Quote Request Form Setup
+        div(class='panel-body')
+            div(class='alert alert-info') 
+                p Set up your quote request form by adding fields
+                p These fields can also be used in Formulas
+                p Field types of number can be added, divided and multiplied
+                p Field types of select, checkbox, textbox or textarea can be used for Conditions
+            div(class='alert alert-warning') This page is still a work in progress
+        div(class='panel-heading') Add a field
+        div(class='panel-body')
+            input(type='hidden' id='shop' value='#{store}')
+            table(class='table')
+                tr
+                    th Field Type
+                    th Field Label
+                    th Extra Text
+                    th Options
+                    th Is Required
+                    th
+                tr
+                    td
+                        select(class='form-control' id='field_type')
+                            option number
+                            option textbox
+                            option textarea
+                            option checkbox
+                            option selectbox
+                    td
+                        input(type='text' class='form-control' id='field_label' placeholder='Field Label')
+                    td
+                        textarea(class='form-control' placeholder='Extra Text (Displays under label)' id='extra_text')
+                    td
+                        table(class='table')
+                            tr
+                                td
+                                    input(type='text' class='form-control' id='add_option_input' placeholder='Option name')
+                                td
+                                    button(type='button' class='btn btn-default' id='addOption') Add Option
+                        table(class='table optionsTable')
+                        
+                    td
+                        select(class='form-control' id='is_required')
+                            option(value='0') No
+                            option(value='1') Yes
+                    td
+                        button(type='button' id='addField' class='btn btn-primary') Add Field
+        div(class='panel-heading') Fields
+        div(class='panel-body')
+            table(class='table table-condensed table-responsive' style='table-layout:fixed;')
+                tr
+                    th Field Type
+                    th Field Label
+                    th Extra Text
+                    th Options
+                    th Is Required
+                    th(width='10%') Edit
+                    th(width='10%') Delete
+                each field in fields
+                    tr
+                        td
+                            label(id='#{field.id}' class='fType uneditable') !{field.type}
+                            select(id='#{field.id}' class='fType editable form-control' value=field.type)
+                                option number
+                                option textbox
+                                option textarea
+                                option checkbox
+                                option selectbox
+                        td 
+                            label(id='#{field.id}' class='fLabel uneditable') !{field.label}
+                            input(id='#{field.id}' class='fLabel editable form-control' type='text' value!=field.label)
+                        td 
+                            div(id='#{field.id}' class='eText uneditable') !{field.extra_text}
+                            textarea(id='#{field.id}' class='eText editable form-control') !{field.extra_text}
+                        td
+                            div(id='#{field.id}' class='optionsDiv uneditable')
+                                if field.options.length
+                                    ul
+                                        each opt in field.options
+                                            li !{opt}
+                                else
+                                    p N/A
+                            div(id='#{field.id}' class='optionsDiv editable')
+                                table(class='table')
+                                    tr
+                                        td
+                                            input(type='text' class='form-control optionInput' id='#{field.id}' placeholder='Option name')
+                                        td
+                                            button(type='button' class='btn btn-default addOptionEdit' id='#{field.id}') Add Option
+                                table(class='table optionsTable' id='#{field.id}')
+                                    each opt in field.options
+                                        tr
+                                            td
+                                                input(type='hidden' class='feOption' id='#{field.id}' value='#{opt}')
+                                                p #{opt}
+                                            td(width='2%')
+                                                button(class='btn btn-danger removeOption' id='#{field.id}' type='button') Remove Option
+                        td
+                            div(id='#{field.id}' class='requiredDiv uneditable')
+                                if field.is_required
+                                    p Yes
+                                else
+                                    p No
+                            div(id='#{field.id}' class='requiredDiv editable')
+                                select(class='form-control is_required_edit' id='#{field.id}')
+                                    option(value='0') No
+                                    option(value='1') Yes
+                                    
+                        td
+                            button(type='button' class='btn btn-info editField' id='#{field.id}') Edit
+                        td
+                            button(type='button' class='btn btn-danger deleteField' id='#{field.id}') Delete
+    script.
+        $(".removeOption").click(function(){
+           $(this).parent().parent().fadeOut("fast", function(){
+               $(this).remove(); 
+            });
+        });
+        $(".addOptionEdit").click(function(){
+            var id = $(this).attr('id');
+            //get option val
+            var option = $("#" + id + ".optionInput").val();
+            if(option != ""){
+                //add option
+                var hiddenInput = $("<input type='hidden' class='feOption' id='" + id + "' value='" + option + "'>");
+                var firstTD = $("<td>" + option + "</td>");
+                firstTD.append(hiddenInput);
+                var removeBtn = $("<button class='btn btn-danger removeOption' id='" + id + "' type='button'> Remove Option </button>");
+                removeBtn.click(function(){
+                    $(this).parent().parent().fadeOut("fast", function(){
+                       $(this).remove(); 
+                    });
+                });
+                var secondTD = $("<td></td>");
+                secondTD.append(removeBtn);
+                var row = $("<tr></tr>");
+                row.append(firstTD);
+                row.append(secondTD);
+                $("#" + id + ".optionsTable").append(row);
+                $("#" + id + ".optionInput").val("");
+            }else{
+                alert("Option cannot be blank");
+            }
+        });
+        $(".editable").hide();
+        $(".editField").click(function(){
+            var id = $(this).attr("id");
+           if($(this).text() == "Edit"){
+             $("#" + id + ".editable").show();
+             $("#" + id + ".uneditable").hide();
+             $(this).text("Save");
+             $(this).removeClass("btn-info");
+             $(this).addClass("btn-success");
+           } else{
+           
+            var fType = $("#" + id + ".fType.editable").val();
+            var fLabel = $("#" + id + ".fLabel.editable").val();
+            var eText = $("#" + id + ".eText.editable").val();
+            var shop = $("#shop").val();
+            var options = "";
+            $("#" + id + ".feOption").each(function(){
+               options += $(this).val() + "||"; 
+            });
+            var required = $("#" + id + ".is_required_edit").val();
+            
+            var data = {
+                shop : shop,
+                fID: id,
+                type : fType,
+                label: fLabel,
+                extra_text: eText,
+                options: options,
+                is_required: required
+            };
+            $.ajax({
+                url: "/form/editField",
+                type: "POST",
+                data: data,
+                success: function(r){
+                    location.reload();
+                }
+            });
+             /*
+             $("#" + id + ".editable").hide();
+             $("#" + id + ".uneditable").show();
+             $(this).text("Edit");
+             $(this).removeClass("btn-success");
+             $(this).addClass("btn-info");
+             */
+           }
+        });
+        $(".deleteField").click(function(){
+           var fID = $(this).attr("id");
+           var shop = $("#shop").val();
+           var self = $(this);
+           $.ajax({
+            url: '/form/deleteField',
+            type: 'POST',
+            data: {fID: fID, shop: shop},
+            success: function(result){
+                self.parent().parent().fadeOut('fast', function(){
+                   $(this).remove(); 
+                });
+            }
+           });
+        });
+        $("#addOption").click(function(){
+           var option = $("#add_option_input").val();
+           if(option != ""){
+               var newOptionInput = $("<input type='hidden' class='fOption' value='" + option + "'>");
+               var optionLabel = $("<td>"  + option + "</td>");
+               optionLabel.append(newOptionInput);
+               var removeBtn = $("<button class='btn btn-danger'>Remove Option</button>");
+               removeBtn.click(function(){
+                  $(this).parent().parent().fadeOut('fast', function(){
+                    $(this).remove();   
+                  });
+               });
+               var secondTD = $("<td></td>");
+               secondTD.append(removeBtn);
+               var row = $("<tr></tr>");
+               row.append(optionLabel);
+               row.append(secondTD);
+               $(".optionsTable").append(row);
+               $("#add_option_input").val("");
+           }else{
+               alert("Option cannot be blank");
+           }
+        });
+        $("#addField").click(function(){
+           var shop = $("#shop").val(); 
+           var fType = $("#field_type").val();
+           var fLabel = $("#field_label").val();
+           var eText = $("#extra_text").val();
+           var options = "";
+           $(".fOption").each(function(){
+              console.log("FOPTION: " + $(this).val());
+              options += $(this).val() + "||";
+              console.log("OPTIONS: " + options);
+           });
+           var isRequired = $("#is_required").val();
+           
+           var data = {
+               shop: shop,
+               type: fType,
+               label: fLabel,
+               extra_text: eText,
+               options: options,
+               is_required: isRequired
+           };
+           //Send to server
+           $.ajax({
+             url: "/form/addField",
+             type: "POST",
+             data: data,
+             success: function(r){
+                 console.log("Added field!");
+                 location.reload();
+             }
+           })
+           
+        });
+
+

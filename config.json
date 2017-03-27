@@ -1,0 +1,12 @@
+{
+    "name": "J-Quote",
+    "appID": "4",
+    "apiKey": "85835a538cc0ec5d94afdd282a83e75b",
+    "appSecret": "bbeca0d54159d286f88adc2796b58653",
+    "scope": "read_products, read_customers, read_themes, write_themes, read_script_tags, write_script_tags",
+    "redirectURI": "https://j-quote-randomcouch.c9users.io/auth/shopify/callback",
+    "DB_NAME":"",
+    "DB_USER":"",
+    "DB_PASS":"",
+    "DB_HOST":""
+}

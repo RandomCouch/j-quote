@@ -1,0 +1,37 @@
+doctype html
+html
+  head
+    title= title
+    
+    link(rel='stylesheet', href='stylesheets/bootstrap.min.css')
+    link(rel='stylesheet', href='stylesheets/jquery-ui.css')
+    link(rel='stylesheet', href='stylesheets/style.css')
+    script(src='javascripts/jquery.min.js')
+    script(src='javascripts/jquery-ui.js')
+    script(src='javascripts/bootstrap.min.js')
+  body
+    if auth
+      ul(class='nav nav-tabs nav-justified')
+        li(role='presentation')
+          a(href='/costs?shop=#{store}') Setup Costs
+        li(role='presentation')
+          a(href='/form?shop=#{store}') Setup Form
+        li(role='presentation')
+          a(href='/formulas?shop=#{store}') Formulas
+        li(role='presentation')
+          a(href='/requests?shop=#{store}') View requests
+        li(role='presentation')
+          a(href='/settings?shop=#{store}') Settings
+    block content
+    
+    script.
+      console.log("URL: " + window.location.pathname);
+      $(".nav-tabs li").each(function(){
+        if($(this).find('a').prop('href') == window.location.href){
+          $(this).addClass('active');
+        }
+      });
+      $(".panel-heading").click(function(){
+        $(this).next().slideToggle();
+        
+      });

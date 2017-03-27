@@ -1,0 +1,76 @@
+extends layout
+
+block content
+    div(class='panel panel-primary')
+        div(class='panel-heading') Formulas setup
+        div(class='panel-body')
+            div(class='alert alert-info') 
+                p Set up the values you wish to calculate on each submission
+                p After a submission is sent, these formulas will trigger and calculate their result
+                p You can set up functions for the formulas which will generate the result values
+                p You can also set up conditions for each function which will only make it trigger if the condition is met
+                p Setting a Formula to show on form will display it's result to the client submitting the form, but in both cases it will show up on the request when reviewing
+            div(class='alert alert-warning') This page is still a work in progress
+        div(class='panel-heading') Add a Formula
+        div(class='panel-body')
+            input(type='hidden' id='shop' value='#{store}')
+            table(class='table')
+                tr
+                    th Formula Name
+                    th Show On Form
+                    th 
+                tr
+                    td
+                        input(type='text' id='a_fName' class='form-control' placeholder='Formula Name')
+                    td
+                        select(class='form-control' id='a_showOnForm')
+                            option(value='0') No
+                            option(value='1') Yes
+                    td
+                        button(type='button' class='btn btn-primary' id='addFormula') Add Formula
+        div(class='panel-heading') Formulas
+        div(class='panel-body')
+            table(class='table')
+                tr  
+                    th Formula Name
+                    th Show On Form
+                    th Manage Functions
+                    th Edit
+                    th Delete
+                each formula in formulas
+                    tr
+                        td #{formula.label}
+                        td
+                            if formula.show_on_form
+                                p Yes
+                            else
+                                p No
+                        td
+                            a(href='/formulas/editFunctions/#{formula.id}/?shop=#{store}')
+                                button(type='button' class='btn btn-default')
+                                    span(class='glyphicon glyphicon-search')
+                        td
+                            button(type='button' class='btn btn-info editFormula' id='#{formula.id}') Edit
+                        td
+                            button(type='button' class='btn btn-danger deleteFormula' id='#{formula.id}') Delete
+                    
+    script.
+        $("#addFormula").click(function(){
+           var fName = $("#a_fName").val();
+           var shop = $("#shop").val();
+           var showOnForm = $("#a_showOnForm").val();
+           if(fName == ""){
+               alert("Formula name can't be empty");
+           }else{
+               $.ajax({
+                url: "/formulas/addFormula",
+                type: "POST",
+                data: {fName: fName, showOnForm: showOnForm, shop: shop},
+                success: function(result){
+                    console.log("Got result: " + JSON.stringify(result));
+                    location.reload();
+                }
+               });
+           }
+            
+        });

@@ -1,0 +1,212 @@
+extends layout
+
+block content
+    div(class='panel panel-primary')
+        div(class='panel-heading') Cost setup
+        div(class='panel-body')
+            div(class='alert alert-info') 
+                p Set up your production and sales costs here, these values will be used to calculate your estimate
+                p First you must set up your tax rate in the format of percentage, ex: 15 is OK 0.15 is not OK
+            table(class='table')
+                tr
+                    td 
+                        label Tax Rate
+                    td
+                        input(type='number' id='tax_rate' class='form-control' placeholder='Tax rate' value='#{tax}')
+                        input(type='hidden' id='shop' value='#{store}')
+                    td
+                        button(type='button' class='btn btn-primary' id='saveTax') Save 
+            
+        div(class='panel-heading') Add a cost
+        div(class='panel-body')
+            table(class='table')
+                tr
+                    th Label
+                    th Price
+                    th Total Price
+                    th
+                tr
+                    td
+                        input(type='text' id='label' class='form-control' placeholder='Cost label')
+                    td
+                        input(type='number' step='any' class='form-control' id='cost' placeholder='Price (Without taxes)' value='0')
+                    td
+                        input(type='number' step='any' class='form-control' placeholder='Total cost' id='total_cost' disabled='true' value='0')
+                    td
+                        button(type='button' class='btn btn-primary' id='addCostBtn') Add cost
+        div(class='panel-heading') Costs
+        div(class='panel-body')
+            table(class='table table-condensed table-responsive' style='table-layout:fixed;')
+                tr
+                    th Label
+                    th Price
+                    th Total Price
+                    th(width='10%') Edit
+                    th(width='10%') Delete
+                each cost in costs
+                    tr
+                        td
+                            label(id='#{cost.id}' class='cLabel uneditable') !{cost.label}
+                            input(id='#{cost.id}' class='cLabel editable form-control' type='text' value!=cost.label)
+                        td 
+                            label(id='#{cost.id}' class='cCost uneditable') #{cost.cost}
+                            input(id='#{cost.id}' class='cCost editable form-control' type='number' step='any' value=cost.cost)
+                        td 
+                            label(id='#{cost.id}' class='cTCost uneditable') #{cost.total_cost}
+                            input(id='#{cost.id}' class='cTCost editable form-control' type='number' step='any' value=cost.total_cost disabled='true')
+                        td
+                            button(type='button' class='btn btn-info editCost' id='#{cost.id}') Edit
+                        td
+                            button(type='button' class='btn btn-danger deleteCost' id='#{cost.id}') Delete
+    script.
+        $("#saveTax").click(function(){
+           var taxRate = $("#tax_rate").val();
+           var shop = $("#shop").val();
+           $.ajax({
+            url:  '/costs/saveTax',
+            type: 'POST',
+            data: {shop: shop, taxRate: taxRate},
+            success: function(r){
+            }
+           });
+        });
+        $(".deleteCost").click(function(){
+           var cID = $(this).attr("id");
+           var shop = $("#shop").val();
+           var self = $(this);
+           $.ajax({
+            url: '/costs/deleteCost',
+            type: 'POST',
+            data: {cID: cID, shop: shop},
+            success: function(result){
+                self.parent().parent().fadeOut('fast', function(){
+                   $(this).remove(); 
+                });
+            }
+           });
+        });
+        $(".editable").hide();
+        $(".editCost").click(function(){
+            var shop = $("#shop").val();
+          var fn = $(this).text();
+          if(fn == "Edit"){
+              $(".uneditable").hide();
+              $(".editable").show();
+              $(this).removeClass("btn-info");
+              $(this).addClass("btn-success");
+              $(this).text("Save");
+          }else{
+              //Save the info
+              var cid = $(this).attr("id");
+              updateEditTotal(null, cid);
+              var newLabel = $("#" + cid + ".cLabel.editable").val();
+              var newCost = $("#" + cid + ".cCost.editable").val();
+              var newTotal = $("#" + cid + ".cTCost.editable").val();
+              
+              var data = {
+                  cID: cid,
+                  label: newLabel,
+                  cost: newCost,
+                  total_cost: newTotal,
+                  shop: shop
+              }
+              $.ajax({
+                url: '/costs/editCost',
+                type: 'POST',
+                data: data,
+                success: function(r){
+                    location.reload();
+                }
+              })
+              
+          }
+        })
+        $("#addCostBtn").click(function(){
+           updateTotal();
+           //Get values
+           var cLabel = $("#label").val();
+           var cPrice = $("#cost").val();
+           var totalPrice = $("#total_cost").val();
+           var store = $("#shop").val();
+           var data = {
+               label: cLabel,
+               cost: cPrice,
+               total_cost: totalPrice,
+               shop: store
+           }
+           $.ajax({
+            url: 'costs/addCost',
+            type: 'POST',
+            data: data,
+            success: function(result){
+                location.reload();
+            }
+           });
+           
+        });
+        $(".cCost.editable").keydown(function(e){
+            var id = $(this).attr('id');
+            updateEditTotal(e, id);
+        });
+        $(".cCost.editable").keyup(function(e){
+            var id = $(this).attr('id');
+            if(e.keyCode == 8){
+                updateEditTotal(null, id);
+            }
+        });
+        var updateEditTotal = function(e, id){
+            if($("#" + id + ".cCost.editable").val() == ""){
+                $("#" + id + ".cCost.editable").val("0");    
+            }
+            if($("#tax_rate").val() == ""){
+                $("#tax_rate").val("0");
+            }
+            var taxRate = parseFloat($("#tax_rate").val());
+            var cost = parseFloat($("#" + id + ".cCost.editable").val());
+            
+            if(e){
+                cost = cost + "" + e.key;
+                cost = parseFloat(cost);
+            }
+            var totalCost = cost + (cost * taxRate / 100);
+            $("#" + id + ".cTCost.editable").val(totalCost);
+        }
+        $("#cost").keydown(function(e){
+           updateTotal(e);
+        });
+        $("#cost").keyup(function(e){
+           if(e.keyCode == 8){
+               updateTotal(e);
+           } 
+        });
+        $("#tax_rate").keydown(function(){
+        
+           updateTotal();
+        });
+        $("#tax_rate").keyup(function(e){
+           if(e.keyCode == 8){
+               updateTotal();
+           } 
+        });
+        $("#cost, #tax_rate").change(function(){
+            updateTotal();
+        });
+        var updateTotal = function(e){
+            if($("#cost").val() == ""){
+                $("#cost").val("0");    
+            }
+            if($("#tax_rate").val() == ""){
+                $("#tax_rate").val("0");
+            }
+            var taxRate = parseFloat($("#tax_rate").val());
+            var cost = parseFloat($("#cost").val());
+            
+            if(e){
+                cost = cost + "" + e.key;
+                cost = parseFloat(cost);
+            }
+            var totalCost = cost + (cost * taxRate / 100);
+            $("#total_cost").val(totalCost);
+        }
+    
+

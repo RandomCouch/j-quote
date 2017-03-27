@@ -1,0 +1,26 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+  background: #ddeeff;
+}
+.nav-tabs>li>a {
+    border: 1px solid rgba(0, 0, 0, 0.24);
+    background-color: rgba(51, 122, 183, 0.68);
+    color: white;
+}
+.nav>li>a:focus, .nav>li>a:hover {
+    background-color: rgb(223, 135, 0);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+}
+a {
+  color: #00B7FF;
+}
+.panel-heading {
+    cursor: pointer;
+}
+.panel-heading:hover {
+    background-color: #429be7;
+}
+.active a{
+      background-color: #edf7ff !important;
+}
